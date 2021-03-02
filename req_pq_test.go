@@ -1,3 +1,5 @@
+// Copyright 2021 lkevinzc. All rights reserved.
+
 package requestpq
 
 import (
@@ -134,7 +136,7 @@ func TestDecorateChannel(t *testing.T) {
 		var localArr []interface{}
 		for {
 			data := <-ch
-			if i == 0{
+			if i == 0 {
 				fmt.Printf("%v", data)
 			}
 			localArr = append(localArr, data)

@@ -1,3 +1,10 @@
+// Copyright 2021 lkevinzc. All rights reserved.
+//
+// Package requestpq uses min heap as underlying data structure
+// and is adapted so that it is thread-safe and order sensitive,
+// which makes it suitable for queuing web requests for batch
+// processing, e.g. in deep models.
+//
 package requestpq
 
 import (
