@@ -1,5 +1,5 @@
 // Copyright 2021 lkevinzc. All rights reserved.
-//
+
 // Package requestpq uses min heap as underlying data structure
 // and is adapted so that it is thread-safe and order sensitive,
 // which makes it suitable for queuing web requests for batch
@@ -10,8 +10,8 @@ package requestpq
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sync"
-	"time"
 
 	"github.com/lkevinzc/requestpq/heap"
 )
@@ -24,8 +24,9 @@ type Task struct {
 
 // Queue is a thread-safe priority queue.
 type Queue struct {
-	heap *heap.ItemHeap
-	lock sync.Mutex
+	heap  *heap.ItemHeap
+	lock  sync.Mutex
+	count uint64
 }
 
 // NewQueue is the constructor of Queue.
@@ -39,10 +40,14 @@ func NewQueue() *Queue {
 func (q *Queue) Enqueue(data interface{}, priority int) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
+	if q.count == math.MaxUint64 {
+		q.count = q.heap.ReOrder()
+	}
+	q.count++
 	item := heap.Item{
-		Priority:  priority,
-		Data:      data,
-		CreatedAt: time.Now(),
+		Priority: priority,
+		Data:     data,
+		Order:    q.count,
 	}
 	q.heap.Push(&item)
 }
@@ -74,8 +79,8 @@ func (q *Queue) Empty() bool {
 
 // DecorateChannel transforms a FIFO queue of normal channel
 // into priority queue with decorated channel.
-func DecorateChannel(inChan chan *Task) (outChan chan interface{}) {
-	outChan = make(chan interface{})
+func DecorateChannel(inChan chan *Task, buffer int) (outChan chan interface{}) {
+	outChan = make(chan interface{}, buffer)
 	pq := NewQueue()
 	cond := sync.NewCond(&pq.lock)
 	go func() {

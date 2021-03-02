@@ -1,5 +1,5 @@
 // Copyright 2021 lkevinzc. All rights reserved.
-//
+
 // Package heap provides basic heap data structure to facilitates
 // priority queue implementation. A heap is a tree with the property
 // that each node is the minimum-valued node in its subtree.
@@ -7,19 +7,19 @@
 // The minimum element in the tree is the root, at index **1**, which
 // makes the indexing a bit easier.
 //
-// This implementation provides the option to record the item creation
-// time, so that the Less() compares the time if there is a tie in the
-// priority. This is useful for dealing with requests (FCFS).
+// This implementation provides the option to record the item order by
+// time or count, so that the Less() compares the time if there is a
+// tie in the priority. This is useful for dealing with requests (FIFO).
 //
 package heap
 
-import "time"
+import "sort"
 
 // An Item contains any data with a priority value.
 type Item struct {
-	Priority  int
-	Data      interface{}
-	CreatedAt time.Time
+	Priority int
+	Data     interface{}
+	Order    uint64
 }
 
 // ItemHeap implements the basic min heap of Item.
@@ -48,7 +48,7 @@ func (h ItemHeap) Empty() bool {
 // Less serves as a comparator.
 func (h ItemHeap) Less(i, j int) bool {
 	if h[i].Priority == h[j].Priority {
-		return h[i].CreatedAt.Before(h[j].CreatedAt)
+		return h[i].Order < h[j].Order
 	}
 	return h[i].Priority < h[j].Priority
 }
@@ -81,6 +81,22 @@ func (h *ItemHeap) Pop() interface{} {
 	*h = old[0:n]
 	h.down(1)
 	return item
+}
+
+func (h ItemHeap) ReOrder() uint64 {
+	orderMap := make(map[uint64][]*Item)
+	orders := make([]uint64, 0)
+	for _, hi := range h {
+		orderMap[hi.Order] = append(orderMap[hi.Order], hi)
+		orders = append(orders, hi.Order)
+	}
+	sort.Slice(orders, func(i, j int) bool { return orders[i] < orders[j] })
+	for i, order := range orders {
+		for _, hi := range orderMap[order] {
+			hi.Order = uint64(i + 1)
+		}
+	}
+	return uint64(len(orders))
 }
 
 func (h *ItemHeap) up(j int) {

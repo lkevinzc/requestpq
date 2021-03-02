@@ -36,9 +36,9 @@ func TestInit0(t *testing.T) {
 	h := NewHeap()
 	for i := 20; i > 0; i-- {
 		h.Push(&Item{
-			Priority:  0,
-			Data:      `test`,
-			CreatedAt: time.Now(),
+			Priority: 0,
+			Data:     `test`,
+			Order:    uint64(time.Now().UnixNano()),
 		}) // all elements are the same
 	}
 
@@ -56,9 +56,9 @@ func TestInit1(t *testing.T) {
 	h := NewHeap()
 	for i := 20; i > 0; i-- {
 		h.Push(&Item{
-			Priority:  i,
-			Data:      `test`,
-			CreatedAt: time.Now(),
+			Priority: i,
+			Data:     `test`,
+			Order:    uint64(time.Now().UnixNano()),
 		}) // all elements are different
 	}
 
@@ -79,9 +79,9 @@ func TestOrder(t *testing.T) {
 
 	for i := 20; i > 10; i-- {
 		h.Push(&Item{
-			Priority:  i,
-			Data:      `test`,
-			CreatedAt: time.Now(),
+			Priority: i,
+			Data:     `test`,
+			Order:    uint64(time.Now().UnixNano()),
 		})
 	}
 
@@ -89,9 +89,9 @@ func TestOrder(t *testing.T) {
 
 	for i := 10; i > 0; i-- {
 		h.Push(&Item{
-			Priority:  i,
-			Data:      `test`,
-			CreatedAt: time.Now(),
+			Priority: i,
+			Data:     `test`,
+			Order:    uint64(time.Now().UnixNano()),
 		})
 		h.verify(t, 1)
 	}
@@ -100,9 +100,9 @@ func TestOrder(t *testing.T) {
 		x := h.Pop().(*Item)
 		if i < 20 {
 			h.Push(&Item{
-				Priority:  20 + i,
-				Data:      `test`,
-				CreatedAt: time.Now(),
+				Priority: 20 + i,
+				Data:     `test`,
+				Order:    uint64(time.Now().UnixNano()),
 			})
 		}
 		h.verify(t, 1)
@@ -118,9 +118,9 @@ func TestRandom(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		h.Push(&Item{
-			Priority:  rand.Intn(20),
-			Data:      `test`,
-			CreatedAt: time.Now(),
+			Priority: rand.Intn(20),
+			Data:     `test`,
+			Order:    uint64(time.Now().UnixNano()),
 		})
 	}
 
@@ -138,9 +138,9 @@ func TestRandomVisualize(t *testing.T) {
 
 	for i := 0; i < 20; i++ {
 		h.Push(&Item{
-			Priority:  rand.Intn(20),
-			Data:      `test`,
-			CreatedAt: time.Now(),
+			Priority: rand.Intn(20),
+			Data:     `test`,
+			Order:    uint64(time.Now().UnixNano()),
 		})
 	}
 
@@ -179,9 +179,9 @@ func TestEqualPriority(t *testing.T) {
 
 	for i := 0; i < 20; i++ {
 		h.Push(&Item{
-			Priority:  20,
-			Data:      fmt.Sprintf("test%v", i),
-			CreatedAt: time.Now(),
+			Priority: 20,
+			Data:     fmt.Sprintf("test%v", i),
+			Order:    uint64(time.Now().UnixNano()),
 		})
 	}
 
@@ -199,9 +199,9 @@ func TestPopEmpty(t *testing.T) {
 	h.verify(t, 1)
 	for i := 0; i < 5; i++ {
 		h.Push(&Item{
-			Priority:  i,
-			Data:      `test`,
-			CreatedAt: time.Now(),
+			Priority: i,
+			Data:     `test`,
+			Order:    uint64(time.Now().UnixNano()),
 		})
 	}
 
@@ -223,9 +223,9 @@ func BenchmarkHeapDup(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < n; j++ {
 			h.Push(&Item{
-				Priority:  0,
-				Data:      `test`,
-				CreatedAt: time.Now(),
+				Priority: 0,
+				Data:     `test`,
+				Order:    uint64(time.Now().UnixNano()),
 			}) // all elements are the same
 		}
 		for h.Len() > 0 {
@@ -256,9 +256,9 @@ func BenchmarkHeapRnd(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < n; j++ {
 			h.Push(&Item{
-				Priority:  rand.Intn(20),
-				Data:      `test`,
-				CreatedAt: time.Now(),
+				Priority: rand.Intn(20),
+				Data:     `test`,
+				Order:    uint64(time.Now().UnixNano()),
 			}) // all elements are random
 		}
 		for h.Len() > 0 {
@@ -305,9 +305,9 @@ func BenchmarkChanQDup(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for j := 0; j < n; j++ {
 			ch <- &Item{
-				Priority:  rand.Intn(20),
-				Data:      `test`,
-				CreatedAt: time.Now(),
+				Priority: rand.Intn(20),
+				Data:     `test`,
+				Order:    uint64(uint64(time.Now().UnixNano())),
 			}
 		}
 	}

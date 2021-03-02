@@ -4,11 +4,12 @@ package requestpq
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func verify(t *testing.T, q *Queue) {
@@ -98,13 +99,14 @@ func TestQueue(t *testing.T) {
 func TestDecorateChannel(t *testing.T) {
 	t.Run("enqueue-dequeue test", func(t *testing.T) {
 		N := 100
-		ch := DecorateChannel(make(chan *Task))
+		inChan := make(chan *Task, 1)
+		outChan := DecorateChannel(inChan, 1)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		i := 0
 		go func() {
 			for {
-				<-ch
+				<-outChan
 				i++
 				if i == N {
 					wg.Done()
@@ -113,7 +115,7 @@ func TestDecorateChannel(t *testing.T) {
 			}
 		}()
 		for i := 0; i < N; i++ {
-			ch <- &Task{
+			inChan <- &Task{
 				Data:     i,
 				Priority: i,
 			}
@@ -122,30 +124,37 @@ func TestDecorateChannel(t *testing.T) {
 
 	t.Run("random priority for sanity check", func(t *testing.T) {
 		N := 5000
-		ch := DecorateChannel(make(chan *Task))
+		buffer := N
+		inChan := make(chan *Task, buffer)
+		outChan := DecorateChannel(inChan, buffer)
+		blocker := make(chan bool)
 		i := 0
 		go func() { // producer
 			for i := 0; i < N; i++ {
 				v := rand.Intn(20)
-				ch <- &Task{
+				inChan <- &Task{
 					Data:     v,
 					Priority: v,
 				}
 			}
+			blocker <- true
 		}()
+		<-blocker
 		var localArr []interface{}
 		for {
-			data := <-ch
-			if i == 0 {
-				fmt.Printf("%v", data)
-			}
+			data := <-outChan
 			localArr = append(localArr, data)
 			i++
 			if i == N {
 				break
 			}
 		}
-		fmt.Println(localArr[0])
+		for i := 0; i < 20; i++ {
+			fmt.Printf("%v ", localArr[i])
+		}
 		//isAscending(t, localArr)
 	})
 }
+
+// go test -v -race -cover
+// go test -bench=.
