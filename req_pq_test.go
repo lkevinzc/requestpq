@@ -179,7 +179,7 @@ func BenchmarkQueue(b *testing.B) {
 
 	b.Run("buffered chan queue", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			q := make(chan string)
+			q := make(chan string, 1024)
 			var wg sync.WaitGroup
 			wg.Add(1)
 			i := 0
