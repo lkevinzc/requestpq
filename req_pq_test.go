@@ -123,7 +123,7 @@ func TestQueue(t *testing.T) {
 func TestDecorateChannel(t *testing.T) {
 	t.Run("enqueue-dequeue test", func(t *testing.T) {
 		N := 100
-		inChan := make(chan *Task, 1)
+		inChan := make(chan *Task)
 		outChan := DecorateChannel(inChan)
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -179,7 +179,7 @@ func TestDecorateChannel(t *testing.T) {
 			fmt.Printf("%v ", localArr[N-i-1])
 		}
 		fmt.Println()
-		//isAscending(t, localArr)
+		isAscending(t, localArr[1:]) // first item is taken and blocked immediately when it's enqueued
 	})
 }
 

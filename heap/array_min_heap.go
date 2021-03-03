@@ -86,8 +86,8 @@ func (h *ItemHeap) Pop() interface{} {
 }
 
 // ReOrder transforms old order values into smaller ones
-// while ensuring them in the original order. Is should
-// be called when the order value is too large.
+// while ensuring them in the original order. It should
+// be called when the order value is likely to overflow.
 func (h ItemHeap) ReOrder() uint64 {
 	var minOrder uint64 = math.MaxUint64
 	for _, hi := range h {
