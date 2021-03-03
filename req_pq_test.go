@@ -4,13 +4,22 @@ package requestpq
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/lkevinzc/requestpq/heap"
+
 	"github.com/stretchr/testify/assert"
 )
+
+func mockNewQueue(initCount uint64) *Queue {
+	h := heap.NewHeap()
+	q := Queue{heap: &h, count: initCount}
+	return &q
+}
 
 func verify(t *testing.T, q *Queue) {
 	if q.Empty() {
@@ -94,13 +103,28 @@ func TestQueue(t *testing.T) {
 		}
 		verify(t, q)
 	})
+
+	t.Run("equal priority, test enqueue sequence when counter overflow", func(t *testing.T) {
+		q := mockNewQueue(math.MaxUint64 - 7777)
+		for i := 0; i < 10000; i++ {
+			if rand.Intn(3) == 0 { // enq with prob = 1/3
+				q.Enqueue(time.Now().UnixNano(), 20)
+			} else {
+				_, err := q.Dequeue()
+				if err != nil {
+					assert.Equal(t, true, q.Empty())
+				}
+			}
+		}
+		verify(t, q)
+	})
 }
 
 func TestDecorateChannel(t *testing.T) {
 	t.Run("enqueue-dequeue test", func(t *testing.T) {
 		N := 100
 		inChan := make(chan *Task, 1)
-		outChan := DecorateChannel(inChan, 1)
+		outChan := DecorateChannel(inChan)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		i := 0
@@ -124,9 +148,8 @@ func TestDecorateChannel(t *testing.T) {
 
 	t.Run("random priority for sanity check", func(t *testing.T) {
 		N := 5000
-		buffer := N
-		inChan := make(chan *Task, buffer)
-		outChan := DecorateChannel(inChan, buffer)
+		inChan := make(chan *Task)
+		outChan := DecorateChannel(inChan)
 		blocker := make(chan bool)
 		i := 0
 		go func() { // producer
@@ -139,7 +162,7 @@ func TestDecorateChannel(t *testing.T) {
 			}
 			blocker <- true
 		}()
-		<-blocker
+		<-blocker // wait until all items are enqueued
 		var localArr []interface{}
 		for {
 			data := <-outChan
@@ -152,6 +175,10 @@ func TestDecorateChannel(t *testing.T) {
 		for i := 0; i < 20; i++ {
 			fmt.Printf("%v ", localArr[i])
 		}
+		for i := 0; i < 20; i++ {
+			fmt.Printf("%v ", localArr[N-i-1])
+		}
+		fmt.Println()
 		//isAscending(t, localArr)
 	})
 }

@@ -8,12 +8,14 @@
 // makes the indexing a bit easier.
 //
 // This implementation provides the option to record the item order by
-// time or count, so that the Less() compares the time if there is a
+// time or count, so that the Less() compares the order if there is a
 // tie in the priority. This is useful for dealing with requests (FIFO).
 //
 package heap
 
-import "sort"
+import (
+	"math"
+)
 
 // An Item contains any data with a priority value.
 type Item struct {
@@ -83,20 +85,20 @@ func (h *ItemHeap) Pop() interface{} {
 	return item
 }
 
+// ReOrder transforms old order values into smaller ones
+// while ensuring them in the original order. Is should
+// be called when the order value is too large.
 func (h ItemHeap) ReOrder() uint64 {
-	orderMap := make(map[uint64][]*Item)
-	orders := make([]uint64, 0)
+	var minOrder uint64 = math.MaxUint64
 	for _, hi := range h {
-		orderMap[hi.Order] = append(orderMap[hi.Order], hi)
-		orders = append(orders, hi.Order)
-	}
-	sort.Slice(orders, func(i, j int) bool { return orders[i] < orders[j] })
-	for i, order := range orders {
-		for _, hi := range orderMap[order] {
-			hi.Order = uint64(i + 1)
+		if hi.Order < minOrder {
+			minOrder = hi.Order
 		}
 	}
-	return uint64(len(orders))
+	for _, hi := range h {
+		hi.Order = hi.Order - minOrder + 1
+	}
+	return uint64(h.Len())
 }
 
 func (h *ItemHeap) up(j int) {

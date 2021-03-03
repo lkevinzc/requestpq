@@ -79,8 +79,8 @@ func (q *Queue) Empty() bool {
 
 // DecorateChannel transforms a FIFO queue of normal channel
 // into priority queue with decorated channel.
-func DecorateChannel(inChan chan *Task, buffer int) (outChan chan interface{}) {
-	outChan = make(chan interface{}, buffer)
+func DecorateChannel(inChan chan *Task) (outChan chan interface{}) {
+	outChan = make(chan interface{})
 	pq := NewQueue()
 	cond := sync.NewCond(&pq.lock)
 	go func() {
