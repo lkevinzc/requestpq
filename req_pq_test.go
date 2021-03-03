@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var N int = 1024
+
 func mockNewQueue(initCount uint64) *Queue {
 	h := heap.NewHeap()
 	q := Queue{heap: &h, count: initCount}
@@ -117,6 +119,84 @@ func TestQueue(t *testing.T) {
 			}
 		}
 		verify(t, q)
+	})
+}
+
+func BenchmarkQueue(b *testing.B) {
+	b.Run("priority queue, equal priority", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			q := NewQueue()
+			var wg sync.WaitGroup
+			wg.Add(1)
+			i := 0
+			go func() {
+				for {
+					if !q.Empty() {
+						_, err := q.Dequeue()
+						if err != nil {
+							b.Fail()
+						}
+						i++
+					}
+					if i == N {
+						wg.Done()
+						break
+					}
+				}
+			}()
+			for i := 0; i < N; i++ {
+				q.Enqueue(`test`, 20)
+			}
+		}
+	})
+
+	b.Run("priority queue, random priority", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			q := NewQueue()
+			var wg sync.WaitGroup
+			wg.Add(1)
+			i := 0
+			go func() {
+				for {
+					if !q.Empty() {
+						_, err := q.Dequeue()
+						if err != nil {
+							b.Fail()
+						}
+						i++
+					}
+					if i == N {
+						wg.Done()
+						break
+					}
+				}
+			}()
+			for i := 0; i < N; i++ {
+				q.Enqueue(`test`, rand.Intn(20))
+			}
+		}
+	})
+
+	b.Run("buffered chan queue", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			q := make(chan string)
+			var wg sync.WaitGroup
+			wg.Add(1)
+			i := 0
+			go func() {
+				for {
+					<-q
+					if i == N {
+						wg.Done()
+						break
+					}
+				}
+			}()
+			for i := 0; i < N; i++ {
+				_ = rand.Intn(20) // to be fair for rand generation in pq
+				q <- `test`
+			}
+		}
 	})
 }
 
